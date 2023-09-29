@@ -18,7 +18,7 @@ namespace API.Helpers
         }
 
         // VerifyPassword - Angegebenes Passwort hashen, gegen das gespeicherte gehashte PW prüfen
-        public bool VerifyPassword(string providedPassword, string storedHashedPassword, string salt)
+        public static bool VerifyPassword(string providedPassword, string storedHashedPassword, string salt = salt)
         {
             string hashedProvidedPassword = HashPassword(providedPassword, salt);
 

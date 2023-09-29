@@ -1,6 +1,6 @@
 ﻿namespace API.Models
 {
-    public class Users
+    public class Users_Registration
     {
         public string username { get; set; }
         public string password { get; set; } 
