@@ -86,7 +86,7 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpPost("change_sensor")]
+        [HttpPost("modify_sensor")]
         public IActionResult SensorChange([FromBody] Sensors_Change sensor)
         {
             // Variablen
@@ -102,7 +102,7 @@ namespace API.Controllers
                 connection.Open();
 
                 MySqlCommand command = connection.CreateCommand();
-                command.CommandText = $"UPDATE sensors SET Serverschrank = @Serverschrank, Adresse = @Adresse, Hersteller = @Herrsteller, Max_Temperature = @Max_Temperature WHERE SensorID = {sensor.SensorID}";
+                command.CommandText = $"UPDATE sensors SET Serverschrank = @Serverschrank, Adresse = @Adresse, Hersteller = @Hersteller, Max_Temperature = @Max_Temperature WHERE SensorID = {sensor.SensorID}";
                 command.Parameters.AddWithValue("@Serverschrank", sensor.serverschrank);
                 command.Parameters.AddWithValue("@Adresse", sensor.adresse);
                 command.Parameters.AddWithValue("@Hersteller", sensor.hersteller);
@@ -111,6 +111,135 @@ namespace API.Controllers
                 command.ExecuteNonQuery();
 
                 return Ok($"Sensordaten für den Sensor {sensor.SensorID} geändert!");
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpPost("ten_last_temperatures_of_sensor")]
+        public IActionResult lastTenTemperatures([FromBody] Sensors_LastTemps sensor)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            List<double> temperatures = new();
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY timestamp ASC LIMIT 10";
+                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    double temp_temp = reader.GetDouble(0);
+                    temperatures.Add(temp_temp);
+                }
+
+                return Ok(temperatures);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpPost("last_temperature_of_sensor")]
+        public IActionResult lastTemperature([FromBody] Sensors_LastTemps sensor)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            double? temperature = null;
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY timestamp DESC LIMIT 1";
+                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    temperature = reader.GetDouble(0);
+                }
+
+                return Ok(temperature);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpPost("highest_temperature_of_sensor")]
+        public IActionResult highestTemperature([FromBody] Sensors_LastTemps sensor)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            double? temperature = null;
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY temperature DESC LIMIT 1";
+                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    temperature = reader.GetDouble(0);
+                }
+
+                return Ok(temperature);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpPost("average_temperature_of_sensor")]
+        public IActionResult averageTemperature([FromBody] Sensors_LastTemps sensor)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            double? temperature = null;
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT AVG(temperature) FROM temperatures where SensorID = @SensorID";
+                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    temperature = reader.GetDouble(0);
+                }
+
+                return Ok(temperature);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }

@@ -109,7 +109,6 @@ namespace API.Controllers
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
-            string stored_password = null;
             List<Users_List> registered_users = new();
 
             try
