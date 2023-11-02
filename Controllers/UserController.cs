@@ -40,14 +40,14 @@ namespace API.Controllers
                 }
 
                 // Datenbankverbindung eröffnen
-                using MySqlConnection connection = new MySqlConnection(connectionString);
+                using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
                 // konnte die Datenbankverbindung aufgebaut werden?
                 Shared_Tools.Assert(connection.State == System.Data.ConnectionState.Open, "Die Datenbank konnte nicht erreicht werden!");
 
                 MySqlCommand command = connection.CreateCommand();
-                command.CommandText = "INSERT INTO nutzer (Nutzername, Password_Hash, Phone_Nr, is_Admin) VALUES (@Nutzername, @Password_Hash, @Phone_Nr, @isAdmin)";
+                command.CommandText = "INSERT INTO users (UserName, Hashed_Password, Phone_Number, Is_Admin) VALUES (@Nutzername, @Password_Hash, @Phone_Nr, @isAdmin)";
                 command.Parameters.AddWithValue("@Nutzername", newUser.username);
                 command.Parameters.AddWithValue("@Password_Hash", PasswordHasher.HashPassword(newUser.password));
                 command.Parameters.AddWithValue("@Phone_Nr", newUser.phone);
@@ -90,7 +90,7 @@ namespace API.Controllers
                 // konnte die Datenbankverbindung aufgebaut werden?
                 Shared_Tools.Assert(connection.State == System.Data.ConnectionState.Open, "Die Datenbank konnte nicht erreicht werden!");
 
-                MySqlCommand command = new("SELECT Password_Hash FROM nutzer WHERE Nutzername = @Nutzername", connection);
+                MySqlCommand command = new("SELECT Hashed_Password FROM users WHERE UserName = @Nutzername", connection);
                 command.Parameters.AddWithValue("@Nutzername", login.username);
 
                 using MySqlDataReader reader = command.ExecuteReader();
