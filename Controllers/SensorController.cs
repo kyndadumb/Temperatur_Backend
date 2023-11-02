@@ -71,11 +71,10 @@ namespace API.Controllers
 
                 if (output == null) { return BadRequest($"Ein Sensor mit der ID {sensor.ID} ist nicht vorhanden!"); }
 
-                command = null;
-
-                command.CommandText = "DELETE FROM sensors WHERE SensorID = @SensorID";
-                command.Parameters.AddWithValue("@SensorID", sensor.ID);
-                command.ExecuteNonQuery();
+                MySqlCommand command_deletion = connection.CreateCommand();
+                command_deletion.CommandText = "DELETE FROM sensors WHERE SensorID = @SensorID";
+                command_deletion.Parameters.AddWithValue("@SensorID", sensor.ID);
+                command_deletion.ExecuteNonQuery();
 
                 return Ok($"Der Sensor (ID: {sensor.ID}) wurde entfernt!");
             }
