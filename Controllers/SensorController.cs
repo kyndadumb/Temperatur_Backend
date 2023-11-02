@@ -32,6 +32,7 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Übergebene Sensorendaten in der Datenbank ablegen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "INSERT INTO sensors (Serverschrank, Adresse, Hersteller, Max_Temperature) VALUES (@Serverschrank, @Adresse, @Hersteller, @Max_Temperature)";
                 command.Parameters.AddWithValue("@Serverschrank", Shared_Tools.NullableStringToQueryValue(newSensor.serverschrank));
@@ -41,6 +42,7 @@ namespace API.Controllers
                 command.ExecuteNonQuery();
                 connection.Close();
 
+                // Status 200 zurückgeben
                 return Ok($"Der Sensor im Serverschrank {newSensor.serverschrank} wurde angelegt!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -62,6 +64,7 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Prüfen, ob ein Sensor mit übergebener ID in der Datenbank vorhanden ist
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT SensorID FROM sensors WHERE SensorID = @SensorID";
                 command.Parameters.AddWithValue("@SensorID", sensor.ID);
@@ -74,13 +77,19 @@ namespace API.Controllers
                     }
                 }
 
+                // if - Ergebnis ist leer --> BadRequest zurückgeben
                 if (output == null) { return BadRequest($"Ein Sensor mit der ID {sensor.ID} ist nicht vorhanden!"); }
 
+                // Command für das Löschen des Sensors konfigurieren und ausführen
                 MySqlCommand command_deletion = connection.CreateCommand();
                 command_deletion.CommandText = "DELETE FROM sensors WHERE SensorID = @SensorID";
                 command_deletion.Parameters.AddWithValue("@SensorID", sensor.ID);
                 command_deletion.ExecuteNonQuery();
 
+                // Verbindung zur Datenbank schließen
+                connection.Close();
+
+                // Statuscode 200 zurückgeben
                 return Ok($"Der Sensor (ID: {sensor.ID}) wurde entfernt!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -101,15 +110,19 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // UPDATE-Statement für alle Sensorendaten konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = $"UPDATE sensors SET Serverschrank = @Serverschrank, Adresse = @Adresse, Hersteller = @Hersteller, Max_Temperature = @Max_Temperature WHERE SensorID = {sensor.SensorID}";
                 command.Parameters.AddWithValue("@Serverschrank", sensor.serverschrank);
                 command.Parameters.AddWithValue("@Adresse", sensor.adresse);
                 command.Parameters.AddWithValue("@Hersteller", sensor.hersteller);
                 command.Parameters.AddWithValue("@Max_Temperature", sensor.max_temperature);
-
                 command.ExecuteNonQuery();
 
+                // Datenbankverbindung schließen
+                connection.Close();
+
+                // Statuscode 200 zurückgeben
                 return Ok($"Sensordaten für den Sensor {sensor.SensorID} geändert!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -131,18 +144,24 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Command für die letzten 10 Temperaturdaten des übergebenen Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY timestamp ASC LIMIT 10";
                 command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
+                // while - Reader ließt Daten --> Temperaturen lesen und zur Liste hinzufügen
                 while (reader.Read())
                 {
                     double temp_temp = reader.GetDouble(0);
                     temperatures.Add(temp_temp);
                 }
 
+                // Datenbankverbindung schließen
+                connection.Close();
+
+                // Statuscode 200 und Temperaturliste zurückgeben
                 return Ok(temperatures);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -164,17 +183,23 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Command für die letzte Temperaturmessung des Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY timestamp DESC LIMIT 1";
                 command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
+                // while - Reader ließt Daten --> Temperatur lesen
                 while (reader.Read())
                 {
                     temperature = reader.GetDouble(0);
                 }
 
+                // Datenbankverbindung schließen
+                connection.Close();
+
+                // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -196,17 +221,23 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Command für die höchste Temperatur aller Zeiten konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY temperature DESC LIMIT 1";
                 command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
+                // while - Reader ließt Daten --> Temperatur speichern
                 while (reader.Read())
                 {
                     temperature = reader.GetDouble(0);
                 }
 
+                // Verbindung zur Datenbank schließen
+                connection.Close();
+
+                // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -228,17 +259,23 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Command für die Durchschnittstemperatur des Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT AVG(temperature) FROM temperatures where SensorID = @SensorID";
                 command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
+                // while - Reader ließt Daten --> Temperatur speichern
                 while (reader.Read())
                 {
                     temperature = reader.GetDouble(0);
                 }
 
+                // Datenbankverbindung schließen
+                connection.Close();
+
+                // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
@@ -259,12 +296,14 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // Command für das Update der Maximaltemperatur eines Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "UPDATE sensors SET Max_Temperature = @Max_Temperature WHERE SensorID = @SensorID";
                 command.Parameters.AddWithValue("@Max_Temperature", data.MaxTemperature);
                 command.Parameters.AddWithValue("@SensorID", data.SensorID);
                 command.ExecuteNonQuery();
 
+                // Command für den Log-Eintrag konfigurieren
                 MySqlCommand command_log = connection.CreateCommand();
                 command_log.CommandText = "INSERT INTO logs (max_temperature, UserID, SensorID) VALUES (@Max_Temperature, @UserID, @SensorID)";
                 command_log.Parameters.AddWithValue("@Max_Temperature", data.MaxTemperature);
@@ -272,6 +311,10 @@ namespace API.Controllers
                 command_log.Parameters.AddWithValue("@SensorID", data.SensorID);
                 command_log.ExecuteNonQuery();
 
+                // Datenbankverbindung schlie0en
+                connection.Close();
+
+                // Statuscode 200 zurückgeben
                 return Ok("Die Maximaltemperatur wurde geändert und ein Log erstellt!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }

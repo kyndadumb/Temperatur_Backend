@@ -41,6 +41,7 @@ namespace API.Controllers
                 // konnte die Datenbankverbindung aufgebaut werden?
                 Shared_Tools.Assert(connection.State == System.Data.ConnectionState.Open, "Die Datenbank konnte nicht erreicht werden!");
 
+                // Daten des Benutzers in der Datenbank ablegen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "INSERT INTO users (UserName, Hashed_Password, Phone_Number, Is_Admin, Name) VALUES (@Nutzername, @Password_Hash, @Phone_Nr, @isAdmin, @Name)";
                 command.Parameters.AddWithValue("@Nutzername", newUser.username);
@@ -48,17 +49,15 @@ namespace API.Controllers
                 command.Parameters.AddWithValue("@Phone_Nr", newUser.phone);
                 command.Parameters.AddWithValue("@isAdmin", newUser.isAdmin);
                 command.Parameters.AddWithValue("@Name", newUser.name);
-
                 command.ExecuteNonQuery();
 
+                // Verbindung schließen
                 connection.Close();
 
+                // Status 200 zurückgeben
                 return Ok($"Der Benutzer {newUser.username} wurde angelegt!");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}");
-            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
         [HttpPost("login_user")]
@@ -83,9 +82,7 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
-                // konnte die Datenbankverbindung aufgebaut werden?
-                Shared_Tools.Assert(connection.State == System.Data.ConnectionState.Open, "Die Datenbank konnte nicht erreicht werden!");
-
+                // Passwort des übergebenen Benutzers auslesen
                 MySqlCommand command = new("SELECT Hashed_Password FROM users WHERE UserName = @Nutzername", connection);
                 command.Parameters.AddWithValue("@Nutzername", login.username);
 
@@ -95,8 +92,11 @@ namespace API.Controllers
                 // konnte ein Benutzer gefunden werden?
                 Shared_Tools.Assert(stored_password != null, $"Es konnte kein Benutzer {login.username} gefunden werden!");
 
-                // if - Passwort kann nicht verifiziert werden
+                // if - Passwort kann nicht verifiziert werden --> BadRequest zurückgeben
                 if (!PasswordHasher.VerifyPassword(login.password, stored_password, PasswordHasher.salt)) { return BadRequest("Ungültige Anmeldeinformationen."); }
+
+                // Verbindung schließen
+                connection.Close();
 
                 // Benutzer konnte nicht eingeloggt werden
                 return Ok($"Der Benutzer {login.username} wurde erfolgreich eingeloggt!");
@@ -120,13 +120,14 @@ namespace API.Controllers
                 using MySqlConnection connection = new(connectionString);
                 connection.Open();
 
+                // alle Benutzerdaten auslesen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin FROM users";
-                
                 MySqlDataReader reader = command.ExecuteReader();
 
                 while (reader.Read())
                 {
+                    // Daten des aktuellen Nutzers lesen
                     Users_List temp_user = new();
                     {
                         temp_user.UserID = reader.GetInt32(0);
@@ -136,9 +137,14 @@ namespace API.Controllers
                         temp_user.isAdmin = reader.GetString(4);
                     }
                     
+                    // Nutzer in der Liste ablegen
                     registered_users.Add(temp_user);
                 }
 
+                // Verbindung schließen
+                connection.Close();
+
+                // Status 200 & Benutzerliste zurückgeben
                 return Ok(registered_users);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}"); };
