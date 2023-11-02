@@ -243,5 +243,38 @@ namespace API.Controllers
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
+
+        [HttpPost("modify_max_temperaure_of_sensor")]
+        public IActionResult maxTemperatureChange([FromBody] Sensors_MaxTempChange data)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "UPDATE sensors SET Max_Temperature = @Max_Temperature WHERE SensorID = @SensorID";
+                command.Parameters.AddWithValue("@Max_Temperature", data.MaxTemperature);
+                command.Parameters.AddWithValue("@SensorID", data.SensorID);
+                command.ExecuteNonQuery();
+
+                MySqlCommand command_log = connection.CreateCommand();
+                command_log.CommandText = "INSERT INTO logs (max_temperature, UserID, SensorID) VALUES (@Max_Temperature, @UserID, @SensorID)";
+                command_log.Parameters.AddWithValue("@Max_Temperature", data.MaxTemperature);
+                command_log.Parameters.AddWithValue("@UserID", data.UserID);
+                command_log.Parameters.AddWithValue("@SensorID", data.SensorID);
+                command_log.ExecuteNonQuery();
+
+                return Ok("Die Maximaltemperatur wurde geändert und ein Log erstellt!");
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
     }
 }
