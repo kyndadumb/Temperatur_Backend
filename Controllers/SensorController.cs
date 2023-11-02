@@ -17,7 +17,7 @@ namespace API.Controllers
             _configuration = configuration;
         }
 
-        [HttpPost("sensor_creation")]
+        [HttpPost("create_sensor")]
         public IActionResult SensorCreation([FromBody] Sensors_Creation newSensor)
         {
             // Variablen
@@ -79,6 +79,35 @@ namespace API.Controllers
                 return Ok($"Der Sensor (ID: {sensor.ID}) wurde entfernt!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpPost("change_sensor")]
+        public IActionResult SensorChange([FromBody] Sensors_Change sensor)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = $"UPDATE sensors SET Serverschrank = @Serverschrank, Adresse = @Adresse, Hersteller = @Herrsteller, Max_Temperature = @Max_Temperature WHERE SensorID = {sensor.SensorID}";
+                command.Parameters.AddWithValue("@Serverschrank", sensor.serverschrank);
+                command.Parameters.AddWithValue("@Adresse", sensor.adresse);
+                command.Parameters.AddWithValue("@Hersteller", sensor.hersteller);
+                command.Parameters.AddWithValue("@Max_Temperature", sensor.max_temperature);
+
+                command.ExecuteNonQuery();
+
+                return Ok($"Sensordaten für den Sensor {sensor.SensorID} geändert!");
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
     }
 }

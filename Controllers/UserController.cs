@@ -17,7 +17,7 @@ namespace API.Controllers
         }
         
 
-        [HttpPost("user_registration")]
+        [HttpPost("register_user")]
         public IActionResult UserCreation([FromBody] Users_Registration newUser)
         {
             // Variablen
@@ -61,7 +61,7 @@ namespace API.Controllers
             }
         }
 
-        [HttpPost("user_login")]
+        [HttpPost("login_user")]
         public IActionResult Login([FromBody] Users_Login login)
         {
             // Variablen
