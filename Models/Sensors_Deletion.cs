@@ -2,6 +2,6 @@
 {
     public class Sensors_Deletion
     {
-        public string ID { get; set; }
+        public int ID { get; set; }
     }
 }

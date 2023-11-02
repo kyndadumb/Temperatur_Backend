@@ -47,7 +47,7 @@ namespace API.Controllers
                 command.Parameters.AddWithValue("@Password_Hash", PasswordHasher.HashPassword(newUser.password));
                 command.Parameters.AddWithValue("@Phone_Nr", newUser.phone);
                 command.Parameters.AddWithValue("@isAdmin", newUser.isAdmin);
-                command.Parameters.AddWithValue("@Name", Shared_Tools.NullableStringToQueryValue(newUser.name));
+                command.Parameters.AddWithValue("@Name", newUser.name);
 
                 command.ExecuteNonQuery();
 
@@ -102,6 +102,47 @@ namespace API.Controllers
                 return Ok($"Der Benutzer {login.username} wurde erfolgreich eingeloggt!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei dem Login ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpGet("show_users")]
+        public IActionResult ShowUserList()
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            string stored_password = null;
+            List<Users_List> registered_users = new();
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin FROM users";
+                
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    Users_List temp_user = new();
+                    {
+                        temp_user.UserID = reader.GetInt32(0);
+                        temp_user.username = Shared_Tools.SqlDataReader_ReadNullableString(reader, 1);
+                        temp_user.phone = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
+                        temp_user.name = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
+                        temp_user.isAdmin = reader.GetString(4);
+                    }
+                    
+                    registered_users.Add(temp_user);
+                }
+
+                return Ok(registered_users);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}"); };
         }
     }
 }

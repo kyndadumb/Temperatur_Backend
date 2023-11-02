@@ -51,7 +51,7 @@ namespace API.Controllers
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
-            string output;
+            string output = null;
 
             try
             {
@@ -66,8 +66,13 @@ namespace API.Controllers
                 command.CommandText = "SELECT SensorID FROM sensors WHERE SensorID = @SensorID";
                 command.Parameters.AddWithValue("@SensorID", sensor.ID);
 
-                MySqlDataReader reader = command.ExecuteReader();
-                output = Shared_Tools.SqlDataReader_ReadNullableString(reader, 0);
+                using (MySqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        output = Shared_Tools.SqlDataReader_ReadNullableString(reader, 0);
+                    }
+                }
 
                 if (output == null) { return BadRequest($"Ein Sensor mit der ID {sensor.ID} ist nicht vorhanden!"); }
 
