@@ -1,10 +1,5 @@
 ﻿using API.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Net;
-using Microsoft.Extensions.Configuration;
-using MySql.Data;
 using MySql.Data.MySqlClient;
 using API.Helpers;
 
@@ -47,11 +42,12 @@ namespace API.Controllers
                 Shared_Tools.Assert(connection.State == System.Data.ConnectionState.Open, "Die Datenbank konnte nicht erreicht werden!");
 
                 MySqlCommand command = connection.CreateCommand();
-                command.CommandText = "INSERT INTO users (UserName, Hashed_Password, Phone_Number, Is_Admin) VALUES (@Nutzername, @Password_Hash, @Phone_Nr, @isAdmin)";
+                command.CommandText = "INSERT INTO users (UserName, Hashed_Password, Phone_Number, Is_Admin, Name) VALUES (@Nutzername, @Password_Hash, @Phone_Nr, @isAdmin, @Name)";
                 command.Parameters.AddWithValue("@Nutzername", newUser.username);
                 command.Parameters.AddWithValue("@Password_Hash", PasswordHasher.HashPassword(newUser.password));
                 command.Parameters.AddWithValue("@Phone_Nr", newUser.phone);
                 command.Parameters.AddWithValue("@isAdmin", newUser.isAdmin);
+                command.Parameters.AddWithValue("@Name", Shared_Tools.NullableStringToQueryValue(newUser.name));
 
                 command.ExecuteNonQuery();
 
