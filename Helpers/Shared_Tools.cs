@@ -61,5 +61,17 @@ namespace API.Helpers
             return output;
 
         } // NullableStringToQueryValue
+
+        // Nullable DateTime vom SqlDataReader lesen
+        internal static DateTime? SqlDataReader_ReadNullableDateTime(MySqlDataReader reader, int i)
+        {
+
+            // Variablen
+            DateTime? output = reader.IsDBNull(i) ? null : (DateTime?)reader.GetDateTime(i);
+
+            // Erfolg liefern
+            return output;
+
+        } // SqlDataReader_ReadNullableString
     }
 }

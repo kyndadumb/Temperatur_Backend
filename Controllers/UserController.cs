@@ -95,6 +95,15 @@ namespace API.Controllers
                 // if - Passwort kann nicht verifiziert werden --> BadRequest zurückgeben
                 if (!PasswordHasher.VerifyPassword(login.password, stored_password, PasswordHasher.salt)) { return BadRequest("Ungültige Anmeldeinformationen."); }
 
+                reader.Close();
+
+                // letzte Login-Zeit aktualisieren
+                string datetime_now = DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss");
+                MySqlCommand command_last_login = new("UPDATE users SET last_login_time = @DTNow where Username = @UserName");
+                command_last_login.Parameters.AddWithValue("@DTNow", datetime_now);
+                command_last_login.Parameters.AddWithValue("@UserName", login.username);
+                command.ExecuteNonQuery();
+
                 // Verbindung schließen
                 connection.Close();
 
@@ -122,7 +131,7 @@ namespace API.Controllers
 
                 // alle Benutzerdaten auslesen
                 MySqlCommand command = connection.CreateCommand();
-                command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin FROM users";
+                command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin, Last_Login_Time FROM users";
                 MySqlDataReader reader = command.ExecuteReader();
 
                 while (reader.Read())
@@ -135,6 +144,7 @@ namespace API.Controllers
                         temp_user.phone = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
                         temp_user.name = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
                         temp_user.isAdmin = reader.GetString(4);
+                        temp_user.lastLogin = Shared_Tools.SqlDataReader_ReadNullableDateTime(reader, 5);
                     }
                     
                     // Nutzer in der Liste ablegen
@@ -171,7 +181,7 @@ namespace API.Controllers
 
                 // alle Benutzerdaten auslesen
                 MySqlCommand command = connection.CreateCommand();
-                command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin FROM users WHERE UserID = @UserID";
+                command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin, Last_Login_Time FROM users WHERE UserID = @UserID";
                 command.Parameters.AddWithValue("@UserID", parsed_userID);
                 MySqlDataReader reader = command.ExecuteReader();
 
@@ -182,6 +192,7 @@ namespace API.Controllers
                     user.phone = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
                     user.name = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
                     user.isAdmin = reader.GetString(4);
+                    user.lastLogin = Shared_Tools.SqlDataReader_ReadNullableDateTime(reader, 5);
                 }
 
                 // Verbindung schließen
