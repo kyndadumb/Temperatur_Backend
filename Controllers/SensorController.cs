@@ -48,6 +48,98 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
+        [HttpGet("show_all_sensors")]
+        public IActionResult ShowAllSensorInformation()
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            List<Sensors_List> all_sensors = new();
+
+            try 
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                // Prüfen, ob ein Sensor mit übergebener ID in der Datenbank vorhanden ist
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT SensorID, Serverschrank, Adresse, Hersteller, Max_Temperature FROM sensors";
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read()) 
+                {
+                    // Daten des aktuellen Sensors lesen
+                    Sensors_List temp_sensor = new();
+                    {
+                        temp_sensor.SensorID = reader.GetInt32(0);
+                        temp_sensor.serverschrank = Shared_Tools.SqlDataReader_ReadNullableString(reader, 1);
+                        temp_sensor.adresse = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
+                        temp_sensor.hersteller = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
+                        temp_sensor.max_temperature = reader.GetDouble(4);
+                    }
+
+                    // Sensor in der Liste ablegen
+                    all_sensors.Add(temp_sensor);
+                }
+
+                // Datenbankverbindung schließen
+                connection.Close();
+
+                // Status 2ßß und die Liste zurückgeben
+                return Ok(all_sensors);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Beim Abrufen der Sensorinformationen ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
+        }
+
+        [HttpGet("{sensor_id}/show_sensor")]
+        public IActionResult ShowSensorInformation(String sensor_id)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            Sensors_List sensor = new();
+
+            // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                // Prüfen, ob ein Sensor mit übergebener ID in der Datenbank vorhanden ist
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT SensorID, Serverschrank, Adresse, Hersteller, Max_Temperature FROM sensors WHERE SensorID = @SensorID";
+                command.Parameters.AddWithValue("@SensorID", parsed_sensorID);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    sensor.SensorID = reader.GetInt32(0);
+                    sensor.serverschrank = Shared_Tools.SqlDataReader_ReadNullableString(reader, 1);
+                    sensor.adresse = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
+                    sensor.hersteller = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
+                    sensor.max_temperature = reader.GetDouble(4);
+                }
+
+                // DB-Verbindung schließen
+                connection.Close();
+
+                // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
+                if (sensor == null) { return NotFound($"Der Benutzer mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
+
+                // Status 200 & Sensor zurückgeben
+                return Ok(sensor);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Beim Auslesen der Sensor-Information ist ein Fehler aufgetreten:\n--> {ex.Message}"); };
+        }
+
         [HttpPost("{sensor_id}/delete_sensor")]
         public IActionResult SensorDeletion(String sensor_id)
         {
@@ -81,7 +173,7 @@ namespace API.Controllers
                 }
 
                 // if - Ergebnis ist leer --> BadRequest zurückgeben
-                if (output == null) { return BadRequest($"Ein Sensor mit der ID {parsed_sensorID} ist nicht vorhanden!"); }
+                if (output == null) { return NotFound($"Ein Sensor mit der ID {parsed_sensorID} ist nicht vorhanden!"); }
 
                 // Command für das Löschen des Sensors konfigurieren und ausführen
                 MySqlCommand command_deletion = connection.CreateCommand();
@@ -160,12 +252,15 @@ namespace API.Controllers
                 // while - Reader ließt Daten --> Temperaturen lesen und zur Liste hinzufügen
                 while (reader.Read())
                 {
-                    double temp_temp = reader.GetDouble(0);
-                    temperatures.Add(temp_temp);
+                    double temp_temperature = reader.GetDouble(0);
+                    temperatures.Add(temp_temperature);
                 }
 
                 // Datenbankverbindung schließen
                 connection.Close();
+
+                // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
+                if (temperatures == null) { return NotFound($"Der Sensor mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
 
                 // Statuscode 200 und Temperaturliste zurückgeben
                 return Ok(temperatures);
@@ -208,6 +303,9 @@ namespace API.Controllers
                 // Datenbankverbindung schließen
                 connection.Close();
 
+                // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
+                if (temperature == null) { return NotFound($"Der Sensor mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
+
                 // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
             }
@@ -249,6 +347,9 @@ namespace API.Controllers
                 // Verbindung zur Datenbank schließen
                 connection.Close();
 
+                // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
+                if (temperature == null) { return NotFound($"Der Benutzer mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
+
                 // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
             }
@@ -289,6 +390,9 @@ namespace API.Controllers
 
                 // Datenbankverbindung schließen
                 connection.Close();
+
+                // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
+                if (temperature == null) { return NotFound($"Der Benutzer mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
 
                 // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);

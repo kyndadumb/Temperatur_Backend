@@ -155,7 +155,7 @@ namespace API.Controllers
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
-            Users_List user = new();
+            Users_List? user = new();
 
             // User-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
             if (!int.TryParse(user_id, out int parsed_userID)) { return BadRequest($"Die übergebene Sensor ID {user_id} ist ungültig!"); }
@@ -187,7 +187,10 @@ namespace API.Controllers
                 // Verbindung schließen
                 connection.Close();
 
-                // Status 200 & Benutzerliste zurückgeben
+                // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
+                if (user == null) { return NotFound($"Der Benutzer mit der ID {parsed_userID} wurde nicht gefunden!"); }
+
+                // Status 200 & Benutzer zurückgeben
                 return Ok(user);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}"); };
