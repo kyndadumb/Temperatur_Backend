@@ -48,12 +48,15 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpPost("delete_sensor")]
-        public IActionResult SensorDeletion([FromBody] Sensors_Deletion sensor)
+        [HttpPost("{sensor_id}/delete_sensor")]
+        public IActionResult SensorDeletion(String sensor_id)
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
             string output = null;
+
+            // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }
 
             try
             {
@@ -67,7 +70,7 @@ namespace API.Controllers
                 // Prüfen, ob ein Sensor mit übergebener ID in der Datenbank vorhanden ist
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT SensorID FROM sensors WHERE SensorID = @SensorID";
-                command.Parameters.AddWithValue("@SensorID", sensor.ID);
+                command.Parameters.AddWithValue("@SensorID", parsed_sensorID);
 
                 using (MySqlDataReader reader = command.ExecuteReader())
                 {
@@ -78,19 +81,19 @@ namespace API.Controllers
                 }
 
                 // if - Ergebnis ist leer --> BadRequest zurückgeben
-                if (output == null) { return BadRequest($"Ein Sensor mit der ID {sensor.ID} ist nicht vorhanden!"); }
+                if (output == null) { return BadRequest($"Ein Sensor mit der ID {parsed_sensorID} ist nicht vorhanden!"); }
 
                 // Command für das Löschen des Sensors konfigurieren und ausführen
                 MySqlCommand command_deletion = connection.CreateCommand();
                 command_deletion.CommandText = "DELETE FROM sensors WHERE SensorID = @SensorID";
-                command_deletion.Parameters.AddWithValue("@SensorID", sensor.ID);
+                command_deletion.Parameters.AddWithValue("@SensorID", parsed_sensorID);
                 command_deletion.ExecuteNonQuery();
 
                 // Verbindung zur Datenbank schließen
                 connection.Close();
 
                 // Statuscode 200 zurückgeben
-                return Ok($"Der Sensor (ID: {sensor.ID}) wurde entfernt!");
+                return Ok($"Der Sensor (ID: {parsed_sensorID}) wurde entfernt!");
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Erstellung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
@@ -128,12 +131,15 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpPost("ten_last_temperatures_of_sensor")]
-        public IActionResult lastTenTemperatures([FromBody] Sensors_LastTemps sensor)
+        [HttpGet("{sensor_id}/ten_last_temperatures_of_sensor")]
+        public IActionResult lastTenTemperatures(string sensor_id)
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
             List<double> temperatures = new();
+
+            // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }
 
             try
             {
@@ -147,7 +153,7 @@ namespace API.Controllers
                 // Command für die letzten 10 Temperaturdaten des übergebenen Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY timestamp ASC LIMIT 10";
-                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+                command.Parameters.AddWithValue("@SensorID", parsed_sensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
@@ -167,12 +173,15 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpPost("last_temperature_of_sensor")]
-        public IActionResult lastTemperature([FromBody] Sensors_LastTemps sensor)
+        [HttpGet("{sensor_id}/last_temperature_of_sensor")]
+        public IActionResult lastTemperature(string sensor_id)
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
             double? temperature = null;
+
+            // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }
 
             try
             {
@@ -186,7 +195,7 @@ namespace API.Controllers
                 // Command für die letzte Temperaturmessung des Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY timestamp DESC LIMIT 1";
-                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+                command.Parameters.AddWithValue("@SensorID", parsed_sensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
@@ -205,12 +214,15 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpPost("highest_temperature_of_sensor")]
-        public IActionResult highestTemperature([FromBody] Sensors_LastTemps sensor)
+        [HttpGet("{sensor_id}/highest_temperature_of_sensor")]
+        public IActionResult highestTemperature(string sensor_id)
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
             double? temperature = null;
+
+            // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }
 
             try
             {
@@ -224,7 +236,7 @@ namespace API.Controllers
                 // Command für die höchste Temperatur aller Zeiten konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT temperature FROM temperatures where SensorID = @SensorID ORDER BY temperature DESC LIMIT 1";
-                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+                command.Parameters.AddWithValue("@SensorID", parsed_sensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 
@@ -243,12 +255,15 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Änderung des Sensors ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpPost("average_temperature_of_sensor")]
-        public IActionResult averageTemperature([FromBody] Sensors_LastTemps sensor)
+        [HttpGet("{sensor_id}/average_temperature_of_sensor")]
+        public IActionResult averageTemperature(string sensor_id)
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
             double? temperature = null;
+
+            // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }
 
             try
             {
@@ -262,7 +277,7 @@ namespace API.Controllers
                 // Command für die Durchschnittstemperatur des Sensors konfigurieren und ausführen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "SELECT AVG(temperature) FROM temperatures where SensorID = @SensorID";
-                command.Parameters.AddWithValue("@SensorID", sensor.SensorID);
+                command.Parameters.AddWithValue("@SensorID", parsed_sensorID);
 
                 MySqlDataReader reader = command.ExecuteReader();
 

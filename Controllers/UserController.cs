@@ -104,7 +104,7 @@ namespace API.Controllers
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei dem Login ist ein Fehler aufgetreten:\n--> {ex.Message}"); }
         }
 
-        [HttpGet("show_users")]
+        [HttpGet("show_all_users")]
         public IActionResult ShowUserList()
         {
             // Variablen
@@ -146,6 +146,49 @@ namespace API.Controllers
 
                 // Status 200 & Benutzerliste zurückgeben
                 return Ok(registered_users);
+            }
+            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}"); };
+        }
+
+        [HttpGet("{user_id}/show_user")]
+        public IActionResult ShowUserList(String user_id)
+        {
+            // Variablen
+            string connectionString = _configuration.GetConnectionString("mysqlConnection");
+            Users_List user = new();
+
+            // User-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
+            if (!int.TryParse(user_id, out int parsed_userID)) { return BadRequest($"Die übergebene Sensor ID {user_id} ist ungültig!"); }
+
+            try
+            {
+                // konnte Connection-String erfolgreich gelesen werden?
+                Shared_Tools.Assert(!string.IsNullOrEmpty(connectionString), "Fehler beim Parsen der DB-Verbindungsinformationen");
+
+                // Datenbankverbindung eröffnen
+                using MySqlConnection connection = new(connectionString);
+                connection.Open();
+
+                // alle Benutzerdaten auslesen
+                MySqlCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT UserID, UserName, Phone_Number, Name, Is_Admin FROM users WHERE UserID = @UserID";
+                command.Parameters.AddWithValue("@UserID", parsed_userID);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    user.UserID = reader.GetInt32(0);
+                    user.username = Shared_Tools.SqlDataReader_ReadNullableString(reader, 1);
+                    user.phone = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
+                    user.name = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
+                    user.isAdmin = reader.GetString(4);
+                }
+
+                // Verbindung schließen
+                connection.Close();
+
+                // Status 200 & Benutzerliste zurückgeben
+                return Ok(user);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, $"Bei der Registrierung ist ein Fehler aufgetreten:\n--> {ex.Message}"); };
         }
