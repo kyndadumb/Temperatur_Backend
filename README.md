@@ -56,6 +56,7 @@ Endpunkt: `/api/Sensor/{sensor_id}/delete_sensor` (`POST`)
 
 
 ```json
+Der Sensor (ID: {Sensor_ID}) wurde entfernt!
 ```
 
 **Sensorinformationen ändern:**
