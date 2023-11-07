@@ -79,6 +79,14 @@ Endpunkt: `/api/Sensor/{sensor_id}/ten_last_temperatures_of_sensor` (`GET`)
 
 Antwort:
 ```json
+[
+  13,
+  18,
+  15,
+  17,
+  16,
+  ...
+]
 ```
 
 **Die letzte Temperatur eines Sensors anzeigen:**
@@ -87,6 +95,7 @@ Endpunkt: `/api/Sensor/{sensor_id}/last_temperature_of_sensor` (`GET`)
 
 Antwort:
 ```json
+16
 ```
 
 **Die höchste Temperatur eines Sensors anzeigen:**
@@ -95,6 +104,7 @@ Endpunkt: `/api/Sensor/{sensor_id}/highest_temperature_of_sensor` (`GET`)
 
 Antwort:
 ```json
+18
 ```
 
 **Die Durchschnittstemperatur eines Sensors anzeigen:**
@@ -103,6 +113,7 @@ Endpunkt: `/api/Sensor/{sensor_id}/average_temperature_of_sensor` (`GET`)
 
 Antwort:
 ```json
+15.8
 ```
 
 ### User
