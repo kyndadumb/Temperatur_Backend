@@ -73,5 +73,17 @@ namespace API.Helpers
             return output;
 
         } // SqlDataReader_ReadNullableString
+
+        // Nullable Double vom SqlDataReader lesen
+        internal static double? SqlDataReader_ReadNullableDouble(MySqlDataReader reader, int i)
+        {
+
+            // Variablen
+            double? output = reader.IsDBNull(i) ? null : (double?)reader.GetDecimal(i);
+
+            // Erfolg liefern
+            return output;
+
+        } // SqlDataReader_ReadNullableDecimal
     }
 }

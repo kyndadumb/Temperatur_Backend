@@ -78,7 +78,7 @@ namespace API.Controllers
                         temp_sensor.serverschrank = Shared_Tools.SqlDataReader_ReadNullableString(reader, 1);
                         temp_sensor.adresse = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
                         temp_sensor.hersteller = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
-                        temp_sensor.max_temperature = reader.GetDouble(4);
+                        temp_sensor.max_temperature = Shared_Tools.SqlDataReader_ReadNullableDouble(reader, 4);
                     }
 
                     // Sensor in der Liste ablegen
@@ -125,14 +125,14 @@ namespace API.Controllers
                     sensor.serverschrank = Shared_Tools.SqlDataReader_ReadNullableString(reader, 1);
                     sensor.adresse = Shared_Tools.SqlDataReader_ReadNullableString(reader, 2);
                     sensor.hersteller = Shared_Tools.SqlDataReader_ReadNullableString(reader, 3);
-                    sensor.max_temperature = reader.GetDouble(4);
+                    sensor.max_temperature = Shared_Tools.SqlDataReader_ReadNullableDouble(reader, 4);
                 }
 
                 // DB-Verbindung schließen
                 connection.Close();
 
                 // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
-                if (sensor == null) { return NotFound($"Der Benutzer mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
+                if (sensor.SensorID == null) { return NotFound($"Der Sensor mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
 
                 // Status 200 & Sensor zurückgeben
                 return Ok(sensor);
@@ -297,7 +297,7 @@ namespace API.Controllers
                 // while - Reader ließt Daten --> Temperatur lesen
                 while (reader.Read())
                 {
-                    temperature = reader.GetDouble(0);
+                    temperature = Shared_Tools.SqlDataReader_ReadNullableDouble(reader, 0);
                 }
 
                 // Datenbankverbindung schließen
@@ -341,14 +341,14 @@ namespace API.Controllers
                 // while - Reader ließt Daten --> Temperatur speichern
                 while (reader.Read())
                 {
-                    temperature = reader.GetDouble(0);
+                    temperature = Shared_Tools.SqlDataReader_ReadNullableDouble(reader, 0);
                 }
 
                 // Verbindung zur Datenbank schließen
                 connection.Close();
 
                 // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
-                if (temperature == null) { return NotFound($"Der Benutzer mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
+                if (temperature == null) { return NotFound($"Der Sensor mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
 
                 // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
@@ -385,14 +385,14 @@ namespace API.Controllers
                 // while - Reader ließt Daten --> Temperatur speichern
                 while (reader.Read())
                 {
-                    temperature = reader.GetDouble(0);
+                    temperature = Shared_Tools.SqlDataReader_ReadNullableDouble(reader, 0);
                 }
 
                 // Datenbankverbindung schließen
                 connection.Close();
 
                 // if - Nutzer ist leer --> keine vorhandene ID zurückgegeben
-                if (temperature == null) { return NotFound($"Der Benutzer mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
+                if (temperature == null) { return NotFound($"Der Sensor mit der ID {parsed_sensorID} wurde nicht gefunden!"); }
 
                 // Statuscode 200 und Temperatur zurückgeben
                 return Ok(temperature);
