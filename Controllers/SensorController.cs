@@ -35,10 +35,10 @@ namespace API.Controllers
                 // Übergebene Sensorendaten in der Datenbank ablegen
                 MySqlCommand command = connection.CreateCommand();
                 command.CommandText = "INSERT INTO sensors (Serverschrank, Adresse, Hersteller, Max_Temperature) VALUES (@Serverschrank, @Adresse, @Hersteller, @Max_Temperature)";
-                command.Parameters.AddWithValue("@Serverschrank", Shared_Tools.NullableStringToQueryValue(newSensor.serverschrank));
-                command.Parameters.AddWithValue("@Adresse", Shared_Tools.NullableStringToQueryValue(newSensor.adresse));
-                command.Parameters.AddWithValue("@Hersteller", Shared_Tools.NullableStringToQueryValue(newSensor.hersteller));
-                command.Parameters.AddWithValue("@Max_Temperature", newSensor.max_temperature);
+                command.Parameters.AddWithValue("@Serverschrank", newSensor.serverschrank);
+                command.Parameters.AddWithValue("@Adresse", newSensor.adresse);
+                command.Parameters.AddWithValue("@Hersteller", newSensor.hersteller);
+                command.Parameters.AddWithValue("@Max_Temperature", Shared_Tools.NullableDoubleToQueryValue(newSensor.max_temperature));
                 command.ExecuteNonQuery();
                 connection.Close();
 
@@ -228,7 +228,7 @@ namespace API.Controllers
         {
             // Variablen
             string connectionString = _configuration.GetConnectionString("mysqlConnection");
-            List<double> temperatures = new();
+            List<double>? temperatures = new();
 
             // Sensor-ID konvertieren, bei unlogischen Daten Bad Request zurückgeben
             if (!int.TryParse(sensor_id, out int parsed_sensorID)) { return BadRequest($"Die übergebene Sensor ID {sensor_id} ist ungültig!"); }

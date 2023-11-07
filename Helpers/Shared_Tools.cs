@@ -85,5 +85,31 @@ namespace API.Helpers
             return output;
 
         } // SqlDataReader_ReadNullableDecimal
+
+        // Nullable Decimal in eine Query-Value umwandeln
+        internal static string NullableDoubleToQueryValue(double? value, ushort nks = 2)
+        {
+
+            // Variablen
+            string output;
+            string format = "0";
+
+            // Nachkommastellen an das Format anfügen
+            for (int i = 0; i < nks; i++)
+            {
+
+                // Format aktualisieren
+                format += i == 0 ? "." : "";
+                format += "0";
+
+            } // for - Nachkommastellen an das Format anfügen
+
+            // Ausgabetext setzen
+            output = value.HasValue ? value.Value.ToString(format).Replace(',', '.') : "NULL";
+
+            // Ergebnis liefern
+            return output;
+
+        } // NullableDecimalToQueryValue
     }
 }
